@@ -1,20 +1,13 @@
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-    # this avoids a warning when using the replace command
+"""
+Code for generating summary statistics and preparing dash applications in section V
+"""
+
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.io as pio
-pio.templates.default = "seaborn"
-import statsmodels.formula.api as sm
-from scipy.stats import gaussian_kde
-#from sklearn.linear_model import LinearRegression
 
 # Create dataframe for first map-chart
 def dataframe_map(df):
 
-    df_map = df.drop(['Intra-EU Trade', 'Intra-Euro Trade'],axis=1).round(1)#.groupby(
-                   # ['Country Code','Industry Code','Trade Country Code','Year']).sum().reset_index()
+    df_map = df.drop(['Intra-EU Trade', 'Intra-Euro Trade'],axis=1).round(1)
 
     # Add full names for countries and industries (previously only codes):
     df_map = pd.merge(df_map,pd.read_excel('../assets/codes.xlsx',sheet_name='Industries'),on='Industry Code')

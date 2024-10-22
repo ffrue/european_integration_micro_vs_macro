@@ -15,11 +15,11 @@ url = {'1995-2000':'https://stats.oecd.org/wbos/fileview2.aspx?IDFile=d26ad811-5
 def download(url=url):
        counter = 1
        for year,link in url.items():
-              if os.path.exists(f'../data/icio/{year.split('-')[0]}_SML.csv'):
+              if os.path.exists(f'../data/{year.split('-')[0]}_SML.csv'):
                      print(f"Data for {year} already exists (file {counter}/{len(url)})")
               else:
                      r = requests.get(link)
                      z = zipfile.ZipFile(io.BytesIO(r.content))
-                     z.extractall('../data/icio/')
+                     z.extractall('../data/')
                      print(f"Data for {year} downloaded (file {counter}/{len(url)})")
               counter += 1

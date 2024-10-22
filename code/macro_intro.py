@@ -1,3 +1,7 @@
+"""
+This file contains all the code for getting and plotting the data in section II
+"""
+
 import pandas as pd
 import numpy as np
 import eurostat
@@ -7,13 +11,15 @@ import plotly.express as px
 import plotly.io as pio
 pio.templates.default = "seaborn"
 
+
+# Turn country codes into full names
 def iso2_to_country(code):
-    # used in following function
     try:
         return pycountry.countries.get(alpha_2=code).name
     except AttributeError:
         pass
 
+# Get and combine macro indicators from Eurostat
 def get_macro_data():
     # Download inflation data
     df = eurostat.get_data_df('prc_hicp_manr')
@@ -44,15 +50,15 @@ def get_macro_data():
     return macro_df
 
 
+# Plot variance time series as dispersion measure
 def dispersion_graph(macro_df):
-    # Use variance as crude dispersion measure
     dispersion = macro_df.drop(['Country'], axis=1).groupby('Date').var().apply(np.sqrt).round(2)
 
     fig = px.line(dispersion.reset_index(), x='Date', y=['Inflation', 'Unemployment', 'Long-Term Interest Rate'],
             title="<b>Variance of macro indicators across Europe</b>")
-    fig.update_layout(margin=dict(l=50, r=50, t=80, b=60))
+    fig.update_layout(margin=dict(l=65, r=50, t=80, b=60))
     fig.update_xaxes(title="")
     fig.update_yaxes(title="cross-country variance")
-    fig.update_legends(title="")#, orientation="h", yanchor="top", y=1.1, xanchor="left", x=0.29)
+    fig.update_legends(title="Macro indicator")
 
     return fig

@@ -1,3 +1,7 @@
+"""
+Generates the interactive dash application in section II
+"""
+
 from dash import Dash, dcc, html, Input, Output
 import pandas as pd
 import datetime

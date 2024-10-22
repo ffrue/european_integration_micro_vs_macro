@@ -4,9 +4,13 @@ by scraping the data from wikipedia. The above defined function are used to buil
 containing the membership status in EU/Eurozone for countries between 1995 and 2000
 """
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+import pandas as pd
+    # avoid warning when using replace-function in line 107
+
 from bs4 import BeautifulSoup
 import requests
-import pandas as pd
 from io import StringIO
 import pycountry
 
@@ -14,18 +18,19 @@ import plotly.express as px
 import plotly.io as pio
 pio.templates.default = "seaborn"
 
+# Two function to turn country codes into full names
 def iso2_to_iso3(code):
     try:
         return pycountry.countries.get(alpha_2=code).alpha_3
     except:
         pass
-
 def iso3_to_country(code):
     try:
         return pycountry.countries.get(alpha_3=code).name
     except AttributeError:
         pass
 
+# Turn Wikipedia table into local dataframe
 def table_to_df(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -40,27 +45,7 @@ def table_to_df(url):
     df['Country Code'] = df['Country Code'].apply(iso2_to_iso3)
     return df
 
-def country_year_dataframe(df_info,cat_var):
-    # generate dataframe with all required country-year pairs
-    countries = pd.unique(df_info['Country Code'])
-    years = list(range(min(pd.unique(df_info['Year'])), 2021))
-
-    cut_off_info = df_info.set_index('Country Code')['Year'].to_dict()
-        # creates dictionary with year of accession per country
-
-    country_year_pairs = pd.MultiIndex.from_product(
-        [countries, years],
-        names=['Country Code', 'Year']
-    ).to_frame(index=False)
-
-    df_target = pd.merge(df_info, country_year_pairs, how='outer')
-    df_target[cat_var] = 'No'
-
-    for c in pd.unique(df_target['Country Code']):
-        df_target.loc[(df_target['Country Code'] == c) & (df_target['Year'] >= cut_off_info[c]), cat_var] = 'Yes'
-    df_target.loc[(df_target['Country Code'] == 'GBR') & (df_target['Year']==2020), cat_var] = 'No'
-    return df_target
-
+# Use previous function to either get EU or Euro entry years for all members
 def get_wiki_table(zone):
     if zone == 'EU':
         # scrap info from wikipedia about EU:
@@ -83,6 +68,28 @@ def get_wiki_table(zone):
     else:
         print('Only works for EU or Eurozone')
 
+# Change format of previous dataframe so that we have a country's membership for each year
+def country_year_dataframe(df_info,cat_var):
+    countries = pd.unique(df_info['Country Code'])
+    years = list(range(min(pd.unique(df_info['Year'])), 2021))
+
+    cut_off_info = df_info.set_index('Country Code')['Year'].to_dict()
+        # creates dictionary with year of accession per country
+
+    country_year_pairs = pd.MultiIndex.from_product(
+        [countries, years],
+        names=['Country Code', 'Year']
+    ).to_frame(index=False)
+
+    df_target = pd.merge(df_info, country_year_pairs, how='outer')
+    df_target[cat_var] = 'No'
+
+    for c in pd.unique(df_target['Country Code']):
+        df_target.loc[(df_target['Country Code'] == c) & (df_target['Year'] >= cut_off_info[c]), cat_var] = 'Yes'
+    df_target.loc[(df_target['Country Code'] == 'GBR') & (df_target['Year']==2020), cat_var] = 'No'
+    return df_target
+
+# Combine the previous functions and run them together
 def build_membership_df():
 
     df_eu = country_year_dataframe(get_wiki_table('EU'), 'EU')
@@ -95,15 +102,15 @@ def build_membership_df():
     df['Country'] = df['Country Code'].apply(iso3_to_country)
     return df
 
+# Generate membership bar graph
 def eu_euro_members(df_membership):
     fig = px.bar(df_membership.replace(to_replace=['Yes', 'No'], value=[1, 0]).groupby(['Year']).agg(
         EU=('EU', 'sum'),
         Eurozone=('Euro', 'sum')).reset_index(),
                  x='Year', y=['EU', 'Eurozone'], barmode='group', color_discrete_sequence=['blue', 'orange'],
-                 title='<b>Number of member states in EU and Eurozone over time</b>', width=800)
-    fig.update_layout(margin=dict(l=50, r=50, t=80, b=60))
+                 title='<b>Number of member states in EU and Eurozone over time</b><br><i style="font-size:13;">Dark area = Years in dataset</i>')
+    fig.update_layout(margin=dict(l=100, r=100, t=80, b=60))
     fig.update_yaxes(title="")
     fig.update_legends(title="", orientation="h", yanchor="top", y=0.9, xanchor="left", x=0.1)
     fig.add_vrect(x0=1994.5, x1=2020.5, y0=0, y1=1, opacity=0.2)
-    fig.add_annotation(x=1997, y=25, text="<i>Years in dataset</i>", showarrow=False, bgcolor=None, font={'size': 13})
     return fig

@@ -38,22 +38,3 @@ def classify_trade(df_short,targets,var):
                  (df_short['Trade Country Code'].isin(targets)) &
                  (df_short['Country Code'] != df_short['Trade Country Code']),var] = 1
     return df_short
-
-# The data has the same shape for all years:
-# for year in range(1995, 2020):
-#     df = pd.read_csv(f'../data/icio/{year}_SML.csv')
-#     print(f'The data in {year} has the shape {df.shape}')
-
-
-# No longer needed:
-
-#def transpose_icio_df(data):
-#    data_length = len(data)
-#    data_transpose = data[list(data.columns)[0:data_length]].copy()
-#    data_transpose.loc[-1] = data_transpose.columns
-#    data_transpose.index = data_transpose.index + 1
-#    data_transpose = data_transpose.sort_index()
-#        # make column names a standard row so that it1 gets transposed with the rest
-#    data_transpose = data_transpose.transpose()
-#    data_transpose.columns = data_transpose.iloc[0]
-#    return data_transpose#[1:].reset_index(drop=True)'
